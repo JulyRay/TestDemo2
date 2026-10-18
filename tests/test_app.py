@@ -1,4 +1,4 @@
-"""Initial CI fixture intentionally omits the required length64 boundary."""
+"""Boundary coverage for the inclusive 1 through 64 character echo contract."""
 from fastapi.testclient import TestClient
 from app import app
 
@@ -11,6 +11,13 @@ def test_one_and_sixty_three():
         response = client.get("/bounded-echo", params={"text": text})
         assert response.status_code == 200
         assert response.json() == {"text": text}
+
+
+def test_sixty_four_character_upper_bound():
+    text = "x" * 64
+    response = client.get("/bounded-echo", params={"text": text})
+    assert response.status_code == 200
+    assert response.json() == {"text": text}
 
 
 def test_invalid_inputs():
