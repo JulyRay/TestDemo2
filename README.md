@@ -1,10 +1,13 @@
 # TestDemo2
 
-Draft-only Reviewer-to-Fixer acceptance experiment. This initial fixture
-intentionally retains every accepted input in a process-global list forever,
-causing unbounded memory growth and unnecessary input retention. It is preserved
-for independent static review; passing functional tests does not establish
-resource safety. This experiment is not ready for deployment or merge.
+Draft-only Reviewer-to-Fixer acceptance experiment. The initial fixture
+intentionally retained every accepted input in a process-global list forever,
+causing unbounded memory growth and unnecessary input retention. The Fixer
+revision removes the global list and append while preserving endpoint behavior.
+The supplied Tester report already identified the seed defect; it must not be
+represented as first discovered solely by Reviewer. Independent final testing
+and review of the repaired revision remain required.
+This experiment is not ready for deployment or merge.
 Factory alone publishes the code and runs hosted CI for the single Draft PR.
 
 ## Endpoint contract
@@ -23,8 +26,11 @@ From the project directory, use the preinstalled offline environment:
 ```
 
 The functional fixture checks valid lengths 1, 63, and 64, missing and empty
-text, length 65, and an unknown route. It intentionally does not test retention;
-the independent reviewer assesses that defect before the Fixer phase.
+text, length 65, and an unknown route. A regression sends 200 distinct inputs
+and checks module-level strings and nested built-in containers, plus application
+state, for retained inputs. It also checks that `RETAINED_INPUTS` is absent.
+The regression was confirmed to fail against the original retention defect
+before applying the fix; it is not a general memory-leak detector.
 
 Factory's hosted CI commands are:
 
