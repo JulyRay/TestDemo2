@@ -1,6 +1,6 @@
 # TestDemo2
 
-This FastAPI app provides `GET /health` and `GET /echo?text=...`.
+This FastAPI app provides `GET /planner-health` and `GET /planner-echo?text=...`.
 Echo accepts 1–16 Unicode code points and preserves whitespace. Missing,
 empty, or longer text returns HTTP 422. Interactive documentation and the
 OpenAPI route are disabled.
@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 from app import app
 
 with TestClient(app) as client:
-    response = client.get("/echo", params={"text": "hello"})
+    response = client.get("/planner-echo", params={"text": "hello"})
     assert response.status_code == 200
     assert response.json() == {"text": "hello"}
     print(response.json())
