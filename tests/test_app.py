@@ -11,7 +11,7 @@ def client():
 
 
 def test_health(client):
-    response = client.get("/health")
+    response = client.get("/planner-health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "planner_version": 1}
     assert type(response.json()["planner_version"]) is int
@@ -23,9 +23,26 @@ def test_health(client):
     ids=["ascii-1", "ascii-16", "space", "surrounding-spaces", "spaces-16", "unicode-16"],
 )
 def test_echo_preserves_valid_text(client, text):
-    response = client.get("/echo", params={"text": text})
+    response = client.get("/planner-echo", params={"text": text})
     assert response.status_code == 200
     assert response.json() == {"text": text}
+
+
+@pytest.mark.parametrize("length", range(1, 17))
+def test_echo_accepts_every_supported_length(client, length):
+    text = "a" * length
+    response = client.get("/planner-echo", params={"text": text})
+    assert response.status_code == 200
+    assert response.json() == {"text": text}
+
+
+@pytest.mark.parametrize("text", ["e\u0301" * 8, "\t\n " * 5 + "\r"])
+def test_echo_counts_code_points_and_preserves_whitespace(client, text):
+    assert len(text) == 16
+    response = client.get("/planner-echo", params={"text": text})
+    assert response.status_code == 200
+    assert response.json() == {"text": text}
+    assert client.get("/planner-echo", params={"text": text + "a"}).status_code == 422
 
 
 @pytest.mark.parametrize(
@@ -39,7 +56,7 @@ def test_echo_preserves_valid_text(client, text):
     ids=["missing", "empty", "ascii-17", "unicode-17"],
 )
 def test_echo_rejects_invalid_text(client, params, error_type):
-    response = client.get("/echo", params=params)
+    response = client.get("/planner-echo", params=params)
     assert response.status_code == 422
     errors = response.json()["detail"]
     assert len(errors) == 1
@@ -47,7 +64,7 @@ def test_echo_rejects_invalid_text(client, params, error_type):
     assert errors[0]["type"] == error_type
 
 
-@pytest.mark.parametrize("path", ["/unknown", "/docs", "/redoc", "/openapi.json"])
+@pytest.mark.parametrize("path", ["/unknown", "/docs", "/redoc", "/openapi.json", "/health", "/echo"])
 def test_unavailable_routes(client, path):
     response = client.get(path)
     assert response.status_code == 404
@@ -57,6 +74,6 @@ def test_unavailable_routes(client, path):
 def test_only_requested_routes_are_exposed():
     assert len(app.routes) == 2
     assert {(route.path, frozenset(route.methods)) for route in app.routes} == {
-        ("/health", frozenset({"GET"})),
-        ("/echo", frozenset({"GET"})),
+        ("/planner-health", frozenset({"GET"})),
+        ("/planner-echo", frozenset({"GET"})),
     }
