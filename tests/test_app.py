@@ -11,7 +11,7 @@ def client():
 
 
 def test_health_exact_response(client):
-    response = client.get("/health")
+    response = client.get("/planner-health")
     assert response.status_code == 200
     body = response.json()
     assert body == {"status": "ok", "planner_version": 1}
@@ -23,7 +23,7 @@ def test_health_exact_response(client):
 def test_echo_code_point_boundaries(client, character, length):
     text = character * length
     assert len(text) == length
-    response = client.get("/echo", params={"text": text})
+    response = client.get("/planner-echo", params={"text": text})
     if length == 17:
         assert response.status_code == 422
     else:
@@ -34,7 +34,7 @@ def test_echo_code_point_boundaries(client, character, length):
 
 @pytest.mark.parametrize("params", [{}, {"text": ""}])
 def test_echo_requires_nonempty_text(client, params):
-    assert client.get("/echo", params=params).status_code == 422
+    assert client.get("/planner-echo", params=params).status_code == 422
 
 
 @pytest.mark.parametrize(
@@ -42,7 +42,7 @@ def test_echo_requires_nonempty_text(client, params):
     [" ", " " * 16, "\t hello\n", "\u2003", "e\u0301" * 8, "😀" * 14 + " \n"],
 )
 def test_echo_preserves_strings_and_whitespace(client, text):
-    response = client.get("/echo", params={"text": text})
+    response = client.get("/planner-echo", params={"text": text})
     assert response.status_code == 200
     assert response.json() == {"text": text}
     assert type(response.json()["text"]) is str
@@ -51,10 +51,12 @@ def test_echo_preserves_strings_and_whitespace(client, text):
 @pytest.mark.parametrize("text", [" " * 17, "a" * 16 + " ", "e\u0301" * 8 + "\n"])
 def test_echo_counts_whitespace_toward_limit(client, text):
     assert len(text) == 17
-    assert client.get("/echo", params={"text": text}).status_code == 422
+    assert client.get("/planner-echo", params={"text": text}).status_code == 422
 
 
-@pytest.mark.parametrize("path", ["/", "/unknown", "/docs", "/redoc", "/openapi.json"])
+@pytest.mark.parametrize(
+    "path", ["/", "/unknown", "/health", "/echo", "/docs", "/redoc", "/openapi.json"]
+)
 def test_absent_routes(client, path):
     response = client.get(path)
     assert response.status_code == 404
